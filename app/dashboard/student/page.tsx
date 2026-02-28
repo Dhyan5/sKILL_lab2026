@@ -1,34 +1,32 @@
 'use client';
-// app/dashboard/student/page.tsx — Student dashboard home
+// app/dashboard/student/page.tsx — Apple Pro student dashboard with room number
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ClipboardList, Clock, CheckCircle2, Wrench } from 'lucide-react';
+import { ClipboardList, Clock, Wrench, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Sidebar from '@/components/Sidebar';
 import Navbar from '@/components/Navbar';
 import ComplaintCard, { type Complaint } from '@/components/ComplaintCard';
 import Loader from '@/components/Loader';
 
-interface User { id: number; name: string; email: string; role: 'student' | 'admin'; }
+interface User { id: number; name: string; email: string; role: 'student' | 'admin'; room_number?: string; }
 
-function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: number; color: string }) {
+function StatCard({ icon: Icon, label, value, accent, delay }: {
+    icon: React.ElementType; label: string; value: number; accent: string; delay: number;
+}) {
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
-            className="glass-card p-5 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
-                <Icon size={22} className="text-white" />
-            </div>
-            <div>
-                <p className="text-slate-400 text-xs font-medium">{label}</p>
-                <p className="text-white text-2xl font-bold">{value}</p>
-            </div>
+        <motion.div
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ background: 'rgba(28,28,30,0.72)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '22px 24px' }}>
+            <div style={{ marginBottom: 16 }}><Icon size={18} color={accent} strokeWidth={1.5} /></div>
+            <p style={{ fontSize: '2rem', fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.04em', margin: '0 0 4px', lineHeight: 1 }}>{value}</p>
+            <p style={{ fontSize: '0.8125rem', color: '#86868b', margin: 0, letterSpacing: '-0.01em' }}>{label}</p>
         </motion.div>
     );
-}
-
-function SkeletonCard() {
-    return <div className="skeleton h-32 w-full" />;
 }
 
 export default function StudentDashboard() {
@@ -38,87 +36,115 @@ export default function StudentDashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const stored = localStorage.getItem('user');
-        if (!stored) { router.push('/login'); return; }
-        const parsed: User = JSON.parse(stored);
-        if (parsed.role !== 'student') { router.push('/dashboard/admin'); return; }
-        setUser(parsed);
+        const s = localStorage.getItem('user');
+        if (!s) { router.push('/login'); return; }
+        const u: User = JSON.parse(s);
+        if (u.role !== 'student') { router.push('/dashboard/admin'); return; }
+        setUser(u);
         fetchComplaints();
-    }, [router]);
+    }, []);
 
     async function fetchComplaints() {
         try {
             const token = localStorage.getItem('token');
             const res = await fetch('/api/complaints', { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) { router.push('/login'); return; }
-            const data = await res.json();
-            setComplaints(data.complaints);
-        } catch {
-            toast.error('Failed to load complaints');
-        } finally {
-            setLoading(false);
-        }
+            setComplaints((await res.json()).complaints);
+        } catch { toast.error('Failed to load complaints'); }
+        finally { setLoading(false); }
     }
 
     if (!user) return <Loader show />;
 
-    const pending = complaints.filter((c) => c.status === 'pending').length;
-    const inProgress = complaints.filter((c) => c.status === 'in_progress').length;
-    const resolved = complaints.filter((c) => c.status === 'resolved').length;
+    const pending = complaints.filter(c => c.status === 'pending').length;
+    const inProgress = complaints.filter(c => c.status === 'in_progress').length;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex">
-            <Sidebar role="student" userName={user.name} />
+        <div style={{ minHeight: '100vh', background: '#000', display: 'flex' }}>
+            <Sidebar role="student" userName={user.name} roomNumber={user.room_number} />
 
-            {/* Main content — offset by sidebar width */}
-            <div className="flex-1 ml-64">
-                <Navbar title="Student Dashboard" />
+            <div style={{ flex: 1, marginLeft: 240 }}>
+                <Navbar title="Overview" />
 
-                <main className="p-6 space-y-6">
-                    {/* Welcome banner */}
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                        className="glass-card p-6 border-l-4 border-purple-500">
-                        <h2 className="text-xl font-bold text-white mb-1">Welcome back, {user.name} 👋</h2>
-                        <p className="text-slate-400 text-sm">Track your hostel complaints and maintenance requests here.</p>
+                <main style={{ padding: '36px 40px', maxWidth: 900, margin: '0 auto' }}>
+
+                    {/* Greeting + room number badge */}
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}
+                        style={{ marginBottom: 36 }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                            <div>
+                                <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.04em', margin: '0 0 6px' }}>
+                                    Good morning, {user.name.split(' ')[0]}
+                                </h2>
+                                <p style={{ fontSize: '0.9375rem', color: '#86868b', margin: 0, letterSpacing: '-0.01em' }}>
+                                    Here&apos;s a summary of your hostel requests.
+                                </p>
+                            </div>
+                            {/* Room number display */}
+                            {user.room_number && (
+                                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
+                                    style={{
+                                        background: 'rgba(28,28,30,0.72)', backdropFilter: 'blur(24px)',
+                                        border: '1px solid rgba(255,255,255,0.09)', borderRadius: 14,
+                                        padding: '14px 20px', textAlign: 'center', minWidth: 110,
+                                    }}>
+                                    <p style={{ fontSize: '0.6875rem', color: '#636366', letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 4px' }}>YOUR ROOM</p>
+                                    <p style={{ fontSize: '1.375rem', fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.03em', margin: 0 }}>
+                                        {user.room_number}
+                                    </p>
+                                </motion.div>
+                            )}
+                        </div>
                     </motion.div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {loading ? (
-                            <>
-                                <SkeletonCard /><SkeletonCard /><SkeletonCard />
-                            </>
-                        ) : (
-                            <>
-                                <StatCard icon={ClipboardList} label="Total Complaints" value={complaints.length} color="bg-purple-600/30" />
-                                <StatCard icon={Clock} label="Pending" value={pending} color="bg-yellow-500/30" />
-                                <StatCard icon={Wrench} label="In Progress" value={inProgress} color="bg-blue-500/30" />
-                            </>
-                        )}
-                    </div>
+                    {loading ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 40 }}>
+                            {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 110 }} />)}
+                        </div>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 40 }}>
+                            <StatCard icon={ClipboardList} label="Total Submitted" value={complaints.length} accent="#f5f5f7" delay={0} />
+                            <StatCard icon={Clock} label="Awaiting Response" value={pending} accent="#ffd60a" delay={0.06} />
+                            <StatCard icon={Wrench} label="Being Addressed" value={inProgress} accent="#0a84ff" delay={0.12} />
+                        </div>
+                    )}
 
                     {/* Recent complaints */}
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-white font-semibold text-base">Recent Complaints</h3>
-                            <span className="text-slate-400 text-xs">{complaints.length} total</span>
-                        </div>
-                        {loading ? (
-                            <div className="space-y-3"> <SkeletonCard /><SkeletonCard /> </div>
-                        ) : complaints.length === 0 ? (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                className="glass-card p-12 text-center">
-                                <CheckCircle2 size={40} className="text-slate-600 mx-auto mb-3" />
-                                <p className="text-slate-400">No complaints yet. Use the sidebar to submit one.</p>
-                            </motion.div>
-                        ) : (
-                            <div className="grid gap-4">
-                                {complaints.slice(0, 6).map((c) => (
-                                    <ComplaintCard key={c.id} complaint={c} />
-                                ))}
-                            </div>
-                        )}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                        <h3 style={{ fontSize: '1.0625rem', fontWeight: 600, color: '#f5f5f7', letterSpacing: '-0.02em', margin: 0 }}>
+                            Recent Complaints
+                        </h3>
+                        <Link href="/dashboard/student/complaints"
+                            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.875rem', color: '#0071e3', textDecoration: 'none' }}>
+                            View all <ArrowRight size={13} strokeWidth={1.8} />
+                        </Link>
                     </div>
+
+                    {loading ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {[1, 2].map(i => <div key={i} className="skeleton" style={{ height: 112 }} />)}
+                        </div>
+                    ) : complaints.length === 0 ? (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                            style={{
+                                background: 'rgba(28,28,30,0.72)', backdropFilter: 'blur(24px)',
+                                border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
+                                padding: '48px 24px', textAlign: 'center',
+                            }}>
+                            <p style={{ fontSize: '0.9375rem', color: '#48484a', margin: '0 0 16px' }}>No complaints yet</p>
+                            <Link href="/dashboard/student/submit">
+                                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                                    className="btn-primary" style={{ fontSize: '0.875rem', padding: '10px 22px' }}>
+                                    Submit your first complaint
+                                </motion.button>
+                            </Link>
+                        </motion.div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {complaints.slice(0, 5).map(c => <ComplaintCard key={c.id} complaint={c} />)}
+                        </div>
+                    )}
                 </main>
             </div>
         </div>

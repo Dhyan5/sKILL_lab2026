@@ -1,57 +1,84 @@
 'use client';
-// components/Navbar.tsx — Top navbar with dark mode toggle and user menu
+// components/Navbar.tsx — Apple Pro top navigation bar
 
 import { motion } from 'framer-motion';
-import { Bell, Moon, Sun } from 'lucide-react';
+import { Bell, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
 
-interface NavbarProps {
-    title: string;
-}
+interface NavbarProps { title: string; }
 
 export default function Navbar({ title }: NavbarProps) {
     const [isDark, setIsDark] = useState(true);
 
-    function toggleTheme() {
-        setIsDark((prev) => {
-            const next = !prev;
-            if (typeof document !== 'undefined') {
-                document.documentElement.classList.toggle('dark', next);
-            }
-            return next;
-        });
-    }
-
     return (
         <motion.header
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4 }}
-            className="h-16 flex items-center justify-between px-6 border-b border-white/10
-        bg-slate-900/80 backdrop-blur-md sticky top-0 z-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            style={{
+                height: 52,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 28px',
+                borderBottom: '1px solid rgba(255,255,255,0.07)',
+                background: 'rgba(0,0,0,0.72)',
+                backdropFilter: 'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                position: 'sticky',
+                top: 0,
+                zIndex: 20,
+            }}
         >
-            <h1 className="text-white font-semibold text-lg">{title}</h1>
+            <h1 style={{
+                fontSize: '0.9375rem',
+                fontWeight: 600,
+                color: '#f5f5f7',
+                letterSpacing: '-0.02em',
+                margin: 0,
+            }}>
+                {title}
+            </h1>
 
-            <div className="flex items-center gap-3">
-                {/* Notification bell */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {/* Notification */}
                 <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     aria-label="Notifications"
-                    className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                    style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.09)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
                 >
-                    <Bell size={17} />
+                    <Bell size={14} color="#86868b" strokeWidth={1.5} />
                 </motion.button>
 
-                {/* Dark / light mode toggle */}
+                {/* Theme toggle */}
                 <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={toggleTheme}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     aria-label="Toggle theme"
-                    className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                    onClick={() => setIsDark(v => !v)}
+                    style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.09)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
                 >
-                    {isDark ? <Sun size={17} /> : <Moon size={17} />}
+                    {isDark
+                        ? <Sun size={14} color="#86868b" strokeWidth={1.5} />
+                        : <Moon size={14} color="#86868b" strokeWidth={1.5} />
+                    }
                 </motion.button>
             </div>
         </motion.header>

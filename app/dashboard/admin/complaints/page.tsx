@@ -1,15 +1,32 @@
 'use client';
-// app/dashboard/admin/complaints/page.tsx — All complaints with filters
+// app/dashboard/admin/complaints/page.tsx — Apple Pro admin complaints with search + filters
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, RefreshCw, Search } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Sidebar from '@/components/Sidebar';
 import Navbar from '@/components/Navbar';
 import ComplaintCard, { type Complaint } from '@/components/ComplaintCard';
 
-const CATEGORIES = ['', 'Plumbing', 'Electrical', 'Furniture', 'Cleanliness', 'Security', 'Internet', 'Food', 'Other'];
+const STATUS_FILTERS = [{ value: '', label: 'All' }, { value: 'pending', label: 'Pending' }, { value: 'in_progress', label: 'In Progress' }, { value: 'resolved', label: 'Resolved' }];
+const CATEGORY_FILTERS = ['', 'Plumbing', 'Electrical', 'Furniture', 'Cleanliness', 'Security', 'Internet', 'Food', 'Other'];
+
+function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+    return (
+        <button onClick={onClick} style={{
+            padding: '5px 14px', borderRadius: 99,
+            fontSize: '0.8125rem', fontWeight: 500, fontFamily: 'inherit',
+            cursor: 'pointer', transition: 'all 0.3s ease', border: '1px solid',
+            background: active ? 'rgba(0,113,227,0.14)' : 'transparent',
+            borderColor: active ? 'rgba(0,113,227,0.35)' : 'rgba(255,255,255,0.08)',
+            color: active ? '#0071e3' : '#86868b',
+        }}>
+            {label || 'All'}
+        </button>
+    );
+}
 
 export default function AdminComplaintsPage() {
     const router = useRouter();
@@ -18,29 +35,25 @@ export default function AdminComplaintsPage() {
 
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState('');
+    const [statusF, setStatusF] = useState('');
+    const [categoryF, setCategoryF] = useState('');
     const [search, setSearch] = useState('');
 
-    async function fetchComplaints() {
+    async function load() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const params = new URLSearchParams();
-            if (statusFilter) params.set('status', statusFilter);
-            if (categoryFilter) params.set('category', categoryFilter);
-            const res = await fetch(`/api/complaints?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+            const p = new URLSearchParams();
+            if (statusF) p.set('status', statusF);
+            if (categoryF) p.set('category', categoryF);
+            const res = await fetch(`/api/complaints?${p}`, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) { router.push('/login'); return; }
-            const data = await res.json();
-            setComplaints(data.complaints);
-        } catch {
-            toast.error('Failed to load');
-        } finally {
-            setLoading(false);
-        }
+            setComplaints((await res.json()).complaints);
+        } catch { toast.error('Failed to load'); }
+        finally { setLoading(false); }
     }
 
-    useEffect(() => { if (user) fetchComplaints(); }, [statusFilter, categoryFilter]);
+    useEffect(() => { if (user) load(); }, [statusF, categoryF]);
 
     async function handleStatusChange(id: number, status: string) {
         try {
@@ -51,79 +64,71 @@ export default function AdminComplaintsPage() {
                 body: JSON.stringify({ status }),
             });
             if (!res.ok) { toast.error('Update failed'); return; }
-            toast.success('Status updated!');
-            setComplaints((prev) => prev.map((c) => c.id === id ? { ...c, status: status as Complaint['status'] } : c));
-        } catch {
-            toast.error('Network error');
-        }
+            toast.success('Status updated');
+            setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: status as Complaint['status'] } : c));
+        } catch { toast.error('Network error'); }
     }
 
-    const filtered = complaints.filter((c) => {
+    const filtered = complaints.filter(c => {
         if (!search) return true;
         const q = search.toLowerCase();
-        return (
-            c.description.toLowerCase().includes(q) ||
-            c.category.toLowerCase().includes(q) ||
-            (c.user_name || '').toLowerCase().includes(q)
-        );
+        return c.description.toLowerCase().includes(q) || c.category.toLowerCase().includes(q) || (c.user_name || '').toLowerCase().includes(q);
     });
 
     if (!user) { router.push('/login'); return null; }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex">
+        <div style={{ minHeight: '100vh', background: '#000', display: 'flex' }}>
             <Sidebar role="admin" userName={user.name} />
-            <div className="flex-1 ml-64">
+            <div style={{ flex: 1, marginLeft: 240 }}>
                 <Navbar title="All Complaints" />
-                <main className="p-6 space-y-5">
+                <main style={{ padding: '36px 40px', maxWidth: 1000, margin: '0 auto' }}>
+
                     {/* Search */}
-                    <div className="relative max-w-sm">
-                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                        <input type="text" placeholder="Search complaints..." className="input-field pl-9"
-                            value={search} onChange={(e) => setSearch(e.target.value)} />
+                    <div style={{ position: 'relative', maxWidth: 360, marginBottom: 28 }}>
+                        <Search size={14} color="#48484a" strokeWidth={1.5} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                        <input className="input-field" style={{ paddingLeft: 36, fontSize: '0.875rem' }}
+                            placeholder="Search by name, category, description…"
+                            value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
 
-                    {/* Status filters */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <Filter size={14} className="text-slate-500" />
-                        <span className="text-slate-500 text-xs">Status:</span>
-                        {['', 'pending', 'in_progress', 'resolved'].map((s) => (
-                            <button key={s} onClick={() => setStatusFilter(s)}
-                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border
-                  ${statusFilter === s ? 'bg-purple-600/40 border-purple-500/60 text-purple-200' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
-                                {s === '' ? 'All' : s === 'in_progress' ? 'In Progress' : s.charAt(0).toUpperCase() + s.slice(1)}
-                            </button>
-                        ))}
+                    {/* Status pills */}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#48484a', alignSelf: 'center', letterSpacing: '0.02em', textTransform: 'uppercase', marginRight: 4 }}>Status</span>
+                        {STATUS_FILTERS.map(f => <FilterPill key={f.value} label={f.label} active={statusF === f.value} onClick={() => setStatusF(f.value)} />)}
                     </div>
 
-                    {/* Category filters */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-slate-500 text-xs ml-5">Category:</span>
-                        {CATEGORIES.map((cat) => (
-                            <button key={cat} onClick={() => setCategoryFilter(cat)}
-                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border
-                  ${categoryFilter === cat ? 'bg-indigo-600/40 border-indigo-500/60 text-indigo-200' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
-                                {cat || 'All'}
-                            </button>
-                        ))}
-                        <button onClick={fetchComplaints} className="ml-auto text-slate-400 hover:text-white">
-                            <RefreshCw size={14} />
-                        </button>
+                    {/* Category pills */}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 24 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#48484a', alignSelf: 'center', letterSpacing: '0.02em', textTransform: 'uppercase', marginRight: 4 }}>Category</span>
+                        {CATEGORY_FILTERS.map(f => <FilterPill key={f} label={f || 'All'} active={categoryF === f} onClick={() => setCategoryF(f)} />)}
+                        <motion.button whileHover={{ rotate: 180 }} transition={{ duration: 0.4 }}
+                            onClick={load} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+                            <RefreshCw size={14} color="#48484a" strokeWidth={1.5} />
+                        </motion.button>
                     </div>
 
-                    <p className="text-slate-500 text-xs">{filtered.length} complaint(s) shown</p>
+                    <p style={{ fontSize: '0.75rem', color: '#48484a', marginBottom: 14 }}>
+                        {filtered.length} complaint{filtered.length !== 1 ? 's' : ''}
+                    </p>
 
                     <AnimatePresence mode="wait">
                         {loading ? (
-                            <div className="grid gap-4">{[1, 2, 3, 4].map(i => <div key={i} className="skeleton h-32" />)}</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: 112 }} />)}
+                            </div>
                         ) : filtered.length === 0 ? (
                             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                className="glass-card p-12 text-center">
-                                <p className="text-slate-400">No complaints found.</p>
+                                style={{
+                                    background: 'rgba(28,28,30,0.72)', backdropFilter: 'blur(24px)',
+                                    border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
+                                    padding: '56px 24px', textAlign: 'center',
+                                }}>
+                                <p style={{ fontSize: '0.9375rem', color: '#48484a', margin: 0 }}>No complaints found</p>
                             </motion.div>
                         ) : (
-                            <motion.div key="list" className="grid gap-4">
-                                {filtered.map((c) => (
+                            <motion.div key="list" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                {filtered.map(c => (
                                     <ComplaintCard key={c.id} complaint={c} isAdmin onStatusChange={handleStatusChange} />
                                 ))}
                             </motion.div>

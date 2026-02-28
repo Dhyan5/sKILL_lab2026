@@ -4,10 +4,6 @@ import { Pool } from 'pg';
 
 let pool: Pool;
 
-/**
- * Returns a singleton PostgreSQL connection pool.
- * Uses DATABASE_URL from environment variables.
- */
 export function getPool(): Pool {
   if (!pool) {
     pool = new Pool({
@@ -18,21 +14,25 @@ export function getPool(): Pool {
   return pool;
 }
 
-/**
- * Initialise database tables if they don't already exist.
- * Called once at API startup via the /api/init route.
- */
 export async function initDB(): Promise<void> {
   const db = getPool();
+
+  // Create users table (with room_number)
   await db.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id        SERIAL PRIMARY KEY,
-      name      VARCHAR(255)        NOT NULL,
-      email     VARCHAR(255) UNIQUE NOT NULL,
-      password  TEXT                NOT NULL,
-      role      VARCHAR(20)         NOT NULL DEFAULT 'student',
-      created_at TIMESTAMPTZ        DEFAULT NOW()
+      id          SERIAL PRIMARY KEY,
+      name        VARCHAR(255)        NOT NULL,
+      email       VARCHAR(255) UNIQUE NOT NULL,
+      password    TEXT                NOT NULL,
+      role        VARCHAR(20)         NOT NULL DEFAULT 'student',
+      room_number VARCHAR(20),
+      created_at  TIMESTAMPTZ         DEFAULT NOW()
     );
+  `);
+
+  // Migration: add room_number to existing tables that don't have it yet
+  await db.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS room_number VARCHAR(20);
   `);
 
   await db.query(`

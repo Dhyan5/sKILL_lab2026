@@ -1,8 +1,8 @@
 'use client';
-// components/ComplaintCard.tsx — Glassmorphism complaint card with motion
+// components/ComplaintCard.tsx — Apple Pro glassmorphism complaint card with room number
 
 import { motion } from 'framer-motion';
-import { AlertCircle, CheckCircle2, Clock, Wrench } from 'lucide-react';
+import { Clock, CheckCircle2, Wrench, ChevronRight, DoorOpen } from 'lucide-react';
 
 export interface Complaint {
     id: number;
@@ -13,6 +13,7 @@ export interface Complaint {
     created_at: string;
     user_name?: string;
     user_email?: string;
+    user_room?: string;
 }
 
 interface ComplaintCardProps {
@@ -21,82 +22,122 @@ interface ComplaintCardProps {
     onStatusChange?: (id: number, status: string) => void;
 }
 
-const statusConfig = {
-    pending: { label: 'Pending', color: 'text-yellow-400', bg: 'bg-yellow-400/10 border-yellow-400/20', icon: Clock },
-    in_progress: { label: 'In Progress', color: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-400/20', icon: Wrench },
-    resolved: { label: 'Resolved', color: 'text-green-400', bg: 'bg-green-400/10 border-green-400/20', icon: CheckCircle2 },
+const statusMap = {
+    pending: { label: 'Pending', color: '#ffd60a', bg: 'rgba(255,214,10,0.1)', border: 'rgba(255,214,10,0.2)', icon: Clock },
+    in_progress: { label: 'In Progress', color: '#0a84ff', bg: 'rgba(10,132,255,0.1)', border: 'rgba(10,132,255,0.2)', icon: Wrench },
+    resolved: { label: 'Resolved', color: '#30d158', bg: 'rgba(48,209,88,0.1)', border: 'rgba(48,209,88,0.2)', icon: CheckCircle2 },
 };
-
-const priorityConfig = {
-    low: { label: 'Low', dot: 'bg-green-400' },
-    medium: { label: 'Medium', dot: 'bg-yellow-400' },
-    high: { label: 'High', dot: 'bg-red-400' },
-};
+const priorityDot = { low: '#30d158', medium: '#ffd60a', high: '#ff453a' };
 
 export default function ComplaintCard({ complaint, isAdmin, onStatusChange }: ComplaintCardProps) {
-    const status = statusConfig[complaint.status] ?? statusConfig.pending;
-    const priority = priorityConfig[complaint.priority] ?? priorityConfig.medium;
-    const StatusIcon = status.icon;
+    const s = statusMap[complaint.status] ?? statusMap.pending;
+    const StatusIcon = s.icon;
+    const dot = priorityDot[complaint.priority] ?? '#86868b';
 
     return (
         <motion.div
             layout
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(139,92,246,0.15)' }}
-            transition={{ duration: 0.3 }}
-            className="relative rounded-2xl overflow-hidden
-        bg-white/5 backdrop-blur-md border border-white/10
-        hover:border-purple-500/30 transition-all duration-300 p-5"
+            exit={{ opacity: 0, y: -8 }}
+            whileHover={{ y: -2 }}
+            transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{
+                background: 'rgba(28,28,30,0.72)',
+                backdropFilter: 'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 14, padding: '20px 22px',
+                transition: 'border-color 0.4s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.4s cubic-bezier(0.25,0.46,0.45,0.94)',
+            }}
+            onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.14)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px rgba(0,0,0,0.45)';
+            }}
+            onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
+            }}
         >
-            {/* Priority stripe */}
-            <div className={`absolute left-0 top-0 bottom-0 w-1 ${priority.dot}`} />
-
-            <div className="pl-3">
-                {/* Header row */}
-                <div className="flex items-start justify-between mb-3">
-                    <div>
-                        <span className="text-white font-semibold text-sm">{complaint.category}</span>
-                        {isAdmin && complaint.user_name && (
-                            <p className="text-slate-400 text-xs mt-0.5">{complaint.user_name} · {complaint.user_email}</p>
-                        )}
-                    </div>
-                    {/* Status badge */}
-                    <span className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${status.bg} ${status.color}`}>
-                        <StatusIcon size={11} />
-                        {status.label}
-                    </span>
-                </div>
-
-                {/* Description */}
-                <p className="text-slate-300 text-sm leading-relaxed mb-4 line-clamp-3">{complaint.description}</p>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                        <div className={`w-1.5 h-1.5 rounded-full ${priority.dot}`} />
-                        <span className="text-slate-400 text-xs">{priority.label} priority</span>
-                        <span className="text-slate-600 text-xs mx-1">·</span>
-                        <span className="text-slate-500 text-xs">
-                            {new Date(complaint.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {/* Header row */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#f5f5f7', letterSpacing: '-0.02em' }}>
+                            {complaint.category}
                         </span>
                     </div>
 
-                    {/* Admin status updater */}
-                    {isAdmin && onStatusChange && (
-                        <select
-                            value={complaint.status}
-                            onChange={(e) => onStatusChange(complaint.id, e.target.value)}
-                            className="text-xs bg-white/10 border border-white/20 text-white rounded-lg px-2 py-1
-                focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
-                        >
-                            <option value="pending" className="bg-slate-800">Pending</option>
-                            <option value="in_progress" className="bg-slate-800">In Progress</option>
-                            <option value="resolved" className="bg-slate-800">Resolved</option>
-                        </select>
+                    {/* Admin: show user + room */}
+                    {isAdmin && complaint.user_name && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: '0.75rem', color: '#636366', letterSpacing: '-0.01em' }}>
+                                {complaint.user_name}
+                            </span>
+                            {complaint.user_room && (
+                                <span style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                                    fontSize: '0.6875rem', fontWeight: 500,
+                                    color: '#0a84ff', letterSpacing: '0.01em',
+                                    background: 'rgba(10,132,255,0.1)', border: '1px solid rgba(10,132,255,0.2)',
+                                    borderRadius: 99, padding: '2px 8px',
+                                }}>
+                                    <DoorOpen size={9} strokeWidth={1.8} />
+                                    Room {complaint.user_room}
+                                </span>
+                            )}
+                        </div>
                     )}
                 </div>
+
+                {/* Status pill */}
+                <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '4px 10px', borderRadius: 99,
+                    background: s.bg, border: `1px solid ${s.border}`,
+                    flexShrink: 0, marginLeft: 12,
+                }}>
+                    <StatusIcon size={11} color={s.color} strokeWidth={1.8} />
+                    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: s.color, letterSpacing: '0.01em' }}>
+                        {s.label}
+                    </span>
+                </div>
+            </div>
+
+            {/* Description */}
+            <p style={{
+                fontSize: '0.875rem', color: '#86868b', lineHeight: 1.55,
+                letterSpacing: '-0.01em', margin: '0 0 14px',
+                display: '-webkit-box', WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            }}>
+                {complaint.description}
+            </p>
+
+            {/* Footer */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.75rem', color: '#48484a', letterSpacing: '-0.01em' }}>
+                    {new Date(complaint.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {' · '}<span style={{ textTransform: 'capitalize' }}>{complaint.priority}</span> priority
+                </span>
+
+                {isAdmin && onStatusChange ? (
+                    <select value={complaint.status} onChange={e => onStatusChange(complaint.id, e.target.value)}
+                        style={{
+                            fontSize: '0.75rem', color: '#86868b',
+                            background: 'rgba(255,255,255,0.05)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: 8, padding: '4px 10px',
+                            cursor: 'pointer', outline: 'none', fontFamily: 'inherit',
+                        }}>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                ) : (
+                    <ChevronRight size={14} color="#3a3a3c" strokeWidth={1.5} />
+                )}
             </div>
         </motion.div>
     );

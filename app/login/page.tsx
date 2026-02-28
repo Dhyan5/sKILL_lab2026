@@ -1,9 +1,9 @@
 'use client';
-// app/login/page.tsx — Login page with animated form
+// app/login/page.tsx — Apple Pro login page
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, LogIn, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Loader from '@/components/Loader';
@@ -24,106 +24,103 @@ export default function LoginPage() {
                 body: JSON.stringify(form),
             });
             const data = await res.json();
-            if (!res.ok) { toast.error(data.error || 'Login failed'); return; }
-
+            if (!res.ok) { toast.error(data.error || 'Sign in failed'); return; }
             localStorage.setItem('user', JSON.stringify(data.user));
             localStorage.setItem('token', data.token);
-            toast.success(`Welcome back, ${data.user.name}!`);
+            toast.success(`Welcome, ${data.user.name}`);
             setShowLoader(true);
-            setTimeout(() => {
-                router.push(data.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student');
-            }, 1200);
-        } catch {
-            toast.error('Network error. Please try again.');
-        } finally {
-            setLoading(false);
-        }
+            setTimeout(() => router.push(data.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student'), 900);
+        } catch { toast.error('Network error'); }
+        finally { setLoading(false); }
     }
 
     return (
         <>
             <Loader show={showLoader} />
-            <div className="min-h-screen flex items-center justify-center px-4
-        bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900">
-
-                {/* Background orbs */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute -top-40 -left-40 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl" />
-                    <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-indigo-600/20 rounded-full blur-3xl" />
-                </div>
-
+            <div style={{
+                minHeight: '100vh', background: '#000', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', padding: '0 20px',
+            }}>
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="w-full max-w-md relative z-10"
+                    transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    style={{ width: '100%', maxWidth: 380 }}
                 >
-                    {/* Logo */}
-                    <div className="text-center mb-8">
+                    {/* App icon */}
+                    <div style={{ textAlign: 'center', marginBottom: 36 }}>
                         <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
-                            className="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 items-center justify-center mb-4 shadow-lg shadow-purple-500/30"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.1, duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
+                            style={{
+                                width: 64, height: 64, borderRadius: 18,
+                                background: 'rgba(28,28,30,0.9)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                margin: '0 auto 20px',
+                            }}
                         >
-                            <Building2 size={28} className="text-white" />
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                <polyline points="9,22 9,12 15,12 15,22" />
+                            </svg>
                         </motion.div>
-                        <h1 className="text-3xl font-bold text-white mb-1">Sahyadri Hostel</h1>
-                        <p className="text-slate-400 text-sm">Sign in to your account</p>
+                        <h1 style={{ fontSize: '1.625rem', fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.04em', margin: '0 0 6px' }}>
+                            Sign In
+                        </h1>
+                        <p style={{ fontSize: '0.9375rem', color: '#86868b', margin: 0, letterSpacing: '-0.01em' }}>
+                            Sahyadri Hostel Portal
+                        </p>
                     </div>
 
                     {/* Card */}
-                    <div className="glass-card p-8">
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div>
-                                <label className="text-slate-300 text-xs font-medium mb-1.5 block">Email Address</label>
-                                <div className="relative">
-                                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                                    <input
-                                        type="email"
-                                        placeholder="you@example.com"
-                                        className="input-field pl-9"
-                                        value={form.email}
-                                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                        required
-                                    />
-                                </div>
+                    <div style={{
+                        background: 'rgba(28,28,30,0.72)',
+                        backdropFilter: 'blur(24px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                        border: '1px solid rgba(255,255,255,0.09)',
+                        borderRadius: 16, padding: '28px 28px',
+                    }}>
+                        <form onSubmit={handleSubmit}>
+                            <div style={{ marginBottom: 16 }}>
+                                <label className="label">Email</label>
+                                <input
+                                    type="email" placeholder="you@example.com"
+                                    className="input-field"
+                                    value={form.email}
+                                    onChange={e => setForm({ ...form, email: e.target.value })}
+                                    required
+                                />
                             </div>
-
-                            <div>
-                                <label className="text-slate-300 text-xs font-medium mb-1.5 block">Password</label>
-                                <div className="relative">
-                                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                                    <input
-                                        type="password"
-                                        placeholder="••••••••"
-                                        className="input-field pl-9"
-                                        value={form.password}
-                                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                        required
-                                    />
-                                </div>
+                            <div style={{ marginBottom: 22 }}>
+                                <label className="label">Password</label>
+                                <input
+                                    type="password" placeholder="••••••••"
+                                    className="input-field"
+                                    value={form.password}
+                                    onChange={e => setForm({ ...form, password: e.target.value })}
+                                    required
+                                />
                             </div>
-
                             <motion.button
-                                type="submit"
-                                disabled={loading}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="btn-primary w-full mt-2"
+                                type="submit" disabled={loading}
+                                whileHover={{ scale: loading ? 1 : 1.01 }}
+                                whileTap={{ scale: loading ? 1 : 0.99 }}
+                                className="btn-primary"
+                                style={{ width: '100%' }}
                             >
-                                <LogIn size={16} />
-                                {loading ? 'Signing in...' : 'Sign In'}
+                                {loading ? 'Signing in…' : 'Sign In'}
                             </motion.button>
                         </form>
-
-                        <p className="text-center text-slate-400 text-sm mt-6">
-                            Don&apos;t have an account?{' '}
-                            <Link href="/register" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-                                Register here
-                            </Link>
-                        </p>
                     </div>
+
+                    <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.875rem', color: '#636366' }}>
+                        New to Sahyadri?{' '}
+                        <Link href="/register" style={{ color: '#0071e3', textDecoration: 'none', fontWeight: 500 }}>
+                            Create account
+                        </Link>
+                    </p>
                 </motion.div>
             </div>
         </>

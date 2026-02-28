@@ -1,166 +1,202 @@
-# Sahyadri Hostel — Complaint & Maintenance Management System
+# 🏠 Sahyadri Hostel — Complaint & Maintenance System
 
-A production-ready, full-stack hostel management system built with **Next.js 15 (App Router)**, **NeonDB (PostgreSQL)**, **Framer Motion**, and **Tailwind CSS**.
+> A full-stack web app built to make hostel life a little less frustrating. Students can report issues, track them in real time, and admins can manage everything from one clean dashboard.
+
+---
+
+## ✨ What's this about?
+
+Ever had a broken tap in your hostel room and had no idea who to tell, or whether anyone even read your complaint? That's what this fixes.
+
+**Sahyadri Hostel** is a complaint and maintenance management system designed for the Sahyadri hostel. Students submit issues, admins resolve them — simple, fast, and transparent.
+
+Built with a modern Apple-inspired dark UI that actually feels good to use.
 
 ---
 
 ## 🚀 Features
 
-### Student Module
-- Register & Login
-- Submit complaints with category, description, and priority
-- View complaint history and status
+### For Students
+- 📝 Submit complaints with category, priority, and description
+- 🏠 Room number shown on your dashboard and sidebar
+- 📊 Track status of all your complaints in real time
+- 🔔 Toast notifications for every action
+- 🎨 Beautiful dark UI that's actually enjoyable to use
 
-### Admin Module
-- View all complaints across the hostel
-- Filter by status and category
-- Search by student name, category, or description
-- Update complaint status inline
+### For Admins
+- 👀 View all complaints across the hostel
+- 🔍 Search by name, description, or category
+- 🏷️ Filter by status (Pending / In Progress / Resolved)
+- ✏️ Update complaint status with a single click
+- 🚨 High-priority alert banner for urgent issues
 
-### UI / UX
-- 🌙 Dark Mode (Slate + Purple palette)
-- 💎 Glassmorphism cards with backdrop blur
-- ⚡ Framer Motion animations on all elements
-- 🔄 Animated full-screen loader
-- 🦴 Skeleton loading for dashboard cards
-- 📱 Responsive layout
-
----
-
-## 🛠 Tech Stack
-
-| Layer       | Technology                  |
-|-------------|-----------------------------|
-| Framework   | Next.js 15 (App Router)     |
-| Database    | NeonDB (PostgreSQL via `pg`)|
-| Auth        | JWT (`jose`) + HTTP cookies |
-| Styling     | Tailwind CSS v4             |
-| Animation   | Framer Motion               |
-| Icons       | Lucide React                |
-| Toasts      | react-hot-toast             |
+### General
+- 🔐 JWT authentication with 7-day sessions
+- 🌙 Animated full-screen loader
+- 💨 Smooth Framer Motion animations throughout
+- 📱 Designed for desktops (mobile-ready sidebar)
 
 ---
 
-## ⚙️ Setup & Run
+## 🛠️ Tech Stack
 
-### 1. Clone & install
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 15 (App Router) |
+| Database | NeonDB (PostgreSQL, serverless) |
+| Auth | JWT via `jose` + httpOnly cookies |
+| Passwords | bcrypt (cost 12) |
+| Styling | Tailwind CSS v4 |
+| Animations | Framer Motion |
+| Icons | Lucide React |
+| Toasts | react-hot-toast |
+| Deployment | Docker + Nginx |
+| CI/CD | GitHub Actions → Docker Hub (`dhyan11/sahyadri-hostel`) |
+
+---
+
+## ⚡ Getting Started
+
+### 1. Clone and install
+
 ```bash
-git clone <repo>
-cd sahyadri-hostel
+git clone https://github.com/Dhyan5/sKILL_lab2026.git
+cd sKILL_lab2026/sahyadri-hostel
 npm install
 ```
 
-### 2. Configure environment
-```bash
-cp .env.example .env.local
-# Edit .env.local with your NeonDB connection string and JWT secret
+### 2. Set up environment variables
+
+Create a `.env.local` file in the project root:
+
+```env
+DATABASE_URL=postgresql://your_user:your_password@your_host/your_db?sslmode=require
+JWT_SECRET=your_super_secret_key_here
 ```
 
-### 3. Initialize the database
-Visit **`http://localhost:3000/api/init`** once after starting the server.  
-This creates the `users` and `complaints` tables on NeonDB (idempotent).
+> You can get a free PostgreSQL database at [neon.tech](https://neon.tech) — takes 2 minutes.
 
-### 4. Start the dev server
+### 3. Initialize the database
+
+Start the dev server first, then visit this URL once:
+
+```
+http://localhost:3000/api/init
+```
+
+This creates the `users` and `complaints` tables automatically. You only need to do this once.
+
+### 4. Run locally
+
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000).
 
-### 5. Production build
-```bash
-npm run build
-npm start
-```
+Open [http://localhost:3000](http://localhost:3000) and you're good to go.
 
 ---
 
 ## 🐳 Docker
 
-```bash
-# Build the image
-docker build -t sahyadri-hostel .
+### Build and run the image
 
-# Run with environment variables
+```bash
+docker build \
+  --build-arg DATABASE_URL="your_neondb_url" \
+  --build-arg JWT_SECRET="your_secret" \
+  -t sahyadri-hostel:latest .
+
 docker run -p 3000:3000 \
-  -e DATABASE_URL="postgresql://..." \
+  -e DATABASE_URL="your_neondb_url" \
   -e JWT_SECRET="your_secret" \
-  sahyadri-hostel
+  sahyadri-hostel:latest
+```
+
+### Or use Docker Compose
+
+```bash
+# Copy and fill in your env values
+cp .env.example .env
+
+docker compose up --build
+```
+
+### Pull the pre-built image (if pushed to Docker Hub)
+
+```bash
+docker pull dhyan11/sahyadri-hostel:latest
+docker run -p 3000:3000 -e DATABASE_URL="..." -e JWT_SECRET="..." dhyan11/sahyadri-hostel:latest
 ```
 
 ---
 
-## 🏗️ Folder Structure
+## 📁 Project Structure
 
 ```
 sahyadri-hostel/
+│
 ├── app/
-│   ├── api/
-│   │   ├── auth/
-│   │   │   ├── login/route.ts
-│   │   │   ├── logout/route.ts
-│   │   │   └── register/route.ts
-│   │   ├── complaints/
-│   │   │   ├── route.ts        ← GET + POST
-│   │   │   └── [id]/route.ts   ← PUT
-│   │   └── init/route.ts       ← DB init
+│   ├── api/                    # Backend API routes
+│   │   ├── auth/               # register, login, logout
+│   │   ├── complaints/         # CRUD for complaints
+│   │   └── init/               # DB table setup
+│   │
 │   ├── dashboard/
-│   │   ├── admin/
-│   │   │   ├── page.tsx
-│   │   │   └── complaints/page.tsx
-│   │   └── student/
-│   │       ├── page.tsx
-│   │       ├── submit/page.tsx
-│   │       └── complaints/page.tsx
-│   ├── login/page.tsx
-│   ├── register/page.tsx
-│   ├── page.tsx
-│   ├── layout.tsx
-│   └── globals.css
+│   │   ├── student/            # Student pages (overview, submit, my complaints)
+│   │   └── admin/              # Admin pages (overview, all complaints)
+│   │
+│   ├── login/                  # Login page
+│   ├── register/               # Registration page
+│   ├── layout.tsx              # Root layout
+│   └── globals.css             # Apple Pro design system tokens
+│
 ├── components/
-│   ├── ComplaintCard.tsx
-│   ├── Loader.tsx
-│   ├── Navbar.tsx
-│   └── Sidebar.tsx
+│   ├── Loader.tsx              # Full-screen animated loader
+│   ├── Sidebar.tsx             # Collapsible nav with room number badge
+│   ├── Navbar.tsx              # Top bar with dark mode toggle
+│   └── ComplaintCard.tsx       # Complaint card with room info for admins
+│
 ├── lib/
-│   ├── auth.ts     ← JWT helpers (jose)
-│   └── db.ts       ← NeonDB pool + initDB
-├── Dockerfile
-├── nginx.conf
-├── .env.example
-└── .env.local      ← Do NOT commit to git
+│   ├── db.ts                   # NeonDB pool + table initialization
+│   └── auth.ts                 # JWT sign/verify using jose
+│
+├── .github/workflows/          # GitHub Actions CI/CD
+├── Dockerfile                  # Multi-stage Docker build
+├── docker-compose.yml          # Docker Compose setup
+├── nginx.conf                  # Nginx reverse proxy config
+└── .env.example                # Example environment variables
 ```
 
 ---
 
-## 🔄 Request Lifecycle
+## 🔐 How auth works
 
-```
-Browser → Next.js App Router
-  ↓
-  /api/auth/login
-    ↓ Extract body
-    ↓ Query NeonDB users table via pg Pool
-    ↓ bcrypt.compare password
-    ↓ signToken (jose HS256)
-    ↓ Set httpOnly cookie "token"
-  ← Return user + token
-
-Browser navigates to /dashboard/student
-  ↓ localStorage.getItem('user') → role check
-  ↓ fetch('/api/complaints', { Authorization: Bearer <token> })
-    ↓ extractToken → verifyToken (jose)
-    ↓ Query NeonDB complaints WHERE user_id = $1
-  ← Return complaints array → render ComplaintCard components
-```
+1. Student/Admin registers → password is hashed with bcrypt → JWT issued
+2. JWT stored as httpOnly cookie (XSS-safe) + in localStorage for API calls
+3. Every protected API route verifies the JWT and checks the user's role
+4. Admins can only see/update all complaints. Students can only see their own.
 
 ---
 
-## 🌐 Nginx (Reverse Proxy)
+## 🏠 Room Number Feature
 
-See `nginx.conf` — configured to proxy `http://localhost:3000` behind port 80 with WebSocket support.
+When students register, they enter their room number (e.g. `A-204`). This shows up:
+- In the sidebar as a blue pill badge below their name
+- As a "YOUR ROOM" card on the dashboard
+- On each complaint card visible to admins (so they know exactly which room to go to)
+
+---
+
+## 🤝 Contributing
+
+This project was built for the Sahyadri Hostel as part of a college skill lab project. Feel free to fork it and adapt it for your own hostel!
 
 ---
 
 ## 📄 License
 
-MIT
+MIT — do whatever you want with it.
+
+---
+
+<p align="center">Built with ❤️ by Dhyan · Sahyadri College of Engineering & Management</p>

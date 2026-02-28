@@ -199,4 +199,3 @@ MIT — do whatever you want with it.
 
 ---
 
-<p align="center">Built with ❤️ by Dhyan · Sahyadri College of Engineering & Management</p>
